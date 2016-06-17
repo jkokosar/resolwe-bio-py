@@ -206,6 +206,7 @@ def sequp():
 
     read_schemas = resolwe.api.descriptorschema.get(slug='reads')
     read_schema = read_schemas[0] if len(read_schemas) > 0 else None
+    print(read_schema['slug'])
 
     # Upload all files in all_new_read_files_uploaded with annotations
     uploaded_files = []

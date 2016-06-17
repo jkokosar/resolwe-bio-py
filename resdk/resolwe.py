@@ -308,6 +308,25 @@ class Resolwe(object):
                         file_list.append(self._process_file_field(obj))
                     fields[field_name] = file_list
 
+                elif field_type == 'list:basic:file:':
+                    file_list = []
+                    for file in field_value:
+                        if not os.path.isfile(file):
+                            raise ValueError("File {} not found.".format(file))
+
+                        file_temp = self._upload_file(file)
+                        if not file_temp:
+                            raise Exception("Upload failed for {}.".format(file))
+
+                        file_name = ntpath.basename(file)
+
+                        file_list.append({
+                            'file': file_name,
+                            'file_temp': file_temp
+                        })
+
+                        input[field_name] = file_list
+
         except KeyError as key_error:
             raise KeyError("Field '{}' not in process '{}' input schema.".format(key_error.args[0], process['slug']))
 
