@@ -5,6 +5,8 @@ Unit tests for resdk/resources/utils.py file.
 
 import unittest
 
+import six
+
 from mock import patch, call
 
 from resdk.resources import utils
@@ -12,10 +14,10 @@ from resdk.resources import utils
 PROCESS_OUTPUT_SCHEMA = [
     {'name': "fastq", 'type': "basic:file:", 'label': "Reads file"},
     {'name': "bases", 'type': "basic:string:", 'label': "Number of bases"},
-    {'name': "options", 'label': "Options", 'type': 'kaj?', 'group': [
+    {'name': "options", 'label': "Options", 'group': [
         {'name': "id", 'type': "basic:string:", 'label': "ID"},
         {'name': "k", 'type': "basic:integer:", 'label': "k-mer size"}
-        ]}
+    ]}
 ]
 
 OUTPUT = {
@@ -30,17 +32,33 @@ OUTPUT = {
 class TestUtils(unittest.TestCase):
 
     def test_iterate_fields(self):
-        result = utils.iterate_fields(OUTPUT, PROCESS_OUTPUT_SCHEMA)
+        result = list(utils.iterate_fields(OUTPUT, PROCESS_OUTPUT_SCHEMA))
+        # result object is iterator - we use lists to pull all elements
 
         expected = [
-            ('fastq', 'basic:file:', 'Reads file', {'file': 'example.fastq.gz'}, None),
-            ('id', 'basic:string:', 'ID', 'abc', None),
-            ('k', 'basic:integer:', 'k-mer size', 123, None),
-            ('bases', 'basic:string:', 'Number of bases', '75', None)]
+            ({'type': 'basic:string:', 'name': 'id', 'label': 'ID'},
+             {'k': 123, 'id': 'abc'}),
+            ({'type': 'basic:string:', 'name': 'bases', 'label': 'Number of bases'},
+             {'options': {'k': 123, 'id': 'abc'}, 'bases': '75', 'fastq': {'file': 'example.fastq.gz'}}),
+            ({'type': 'basic:file:', 'name': 'fastq', 'label': 'Reads file'},
+             {'options': {'k': 123, 'id': 'abc'}, 'bases': '75', 'fastq': {'file': 'example.fastq.gz'}}),
+            ({'type': 'basic:integer:', 'name': 'k', 'label': 'k-mer size'},
+             {'k': 123, 'id': 'abc'})]
 
-        # result object is iterator - we use lists to pull all elements
-        # list order can differ between tests, so lists need to be sorted:
-        self.assertEqual(sorted(list(result)), sorted(expected))
+        six.assertCountEqual(self, result, expected)
+
+    def test_iterate_fields_modif(self):
+        """
+        Ensure that changing of ``values`` inside iteration loop also changes the ``OUTPUT`` values.
+        """
+        for schema, values in utils.iterate_fields(OUTPUT, PROCESS_OUTPUT_SCHEMA):
+            field_name = schema['name']
+            if field_name == "bases":
+                values[field_name] = str(int(values[field_name]) + 1)
+
+        self.assertEqual(OUTPUT['bases'], "76")
+        # Fix the OUTPUT to previous state:
+        OUTPUT['bases'] = "75"
 
     def test_find_field(self):
         result = utils.find_field(PROCESS_OUTPUT_SCHEMA, 'fastq')
