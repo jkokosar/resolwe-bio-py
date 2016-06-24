@@ -18,7 +18,7 @@ command will fail.
    genome_id = genome.id
    reads_id = sample.data[0]
 
-   aligned = res.run('alignment-bowtie-2-2-3_trim', input={
+   aligned = res.run('alignment-bowtie2', input={
                          'genome': genome_id,
                          'reads': reads_id,
                          'reporting': {'rep_mode': 'k', 'k_reports': 1}
@@ -37,7 +37,7 @@ runs on the server:
 .. code-block:: python
    :emphasize-lines: 5
 
-   aligned = res.run('alignment-bowtie-2-2-3_trim', input={
+   aligned = res.run('alignment-bowtie2', input={
                          'genome': genome_id,
                          'reads': reads_id,
                          'reporting': {'rep_mode': 'k', 'k_reports': 1}
@@ -48,7 +48,7 @@ runs on the server:
 The process's algorithm is written in bash. We can directly call programms that
 are included in the runtime (*e.g.,* cat, head and grep). Resolwe
 Bioinformatics runs processes in a `Docker container`_ with many
-bioinformatics tools pre-installed. In the *Aligner (Bowtie 2.2.3)*
+bioinformatics tools pre-installed. In the *Bowtie 2.2.3*
 process we call the ``bowtie2`` aligner, ``samtools`` and other
 commands.
 
@@ -56,9 +56,9 @@ commands.
 
 .. code-block:: bash
    :linenos:
-   :lineno-start: 517
+   :lineno-start: 460
 
-   samtools sort "${NAME}_align_unsorted.bam" "${NAME}_align"
+   samtools sort "${FW_NAME}_align_unsorted.bam" "${FW_NAME}_align"
 
 Sometime you wish to write ad-hoc scripts and call them from processes.
 For instance, to post-process Bowtie results, we call
@@ -66,7 +66,7 @@ For instance, to post-process Bowtie results, we call
 
 .. code-block:: bash
    :linenos:
-   :lineno-start: 247
+   :lineno-start: 214
 
    mergebowtiestats.py $STATS
 
@@ -92,7 +92,7 @@ the tools argument:
 .. code-block:: python
    :emphasize-lines: 5
 
-   aligned = res.run('alignment-bowtie-2-2-3_trim', input={
+   aligned = res.run('alignment-bowtie2', input={
                          'genome': genome_id,
                          'reads': reads_id,
                          'reporting': {'rep_mode': 'k', 'k_reports': 1}

@@ -47,7 +47,7 @@ processes_by_user1 = res.process.filter(contributor=1)
 data_ok = res.data.filter(status="OK")
 # data_ok is a list of Data objects that have status="OK".
 
-data_list = res.data.filter(status="OK", contributor=2, process_name="Aligner (Bowtie 1.0.0)", ordering='created', limit=3)
+data_list = res.data.filter(status="OK", contributor=2, process_name="Bowtie 1.0.0", ordering='created', limit=3)
 
 sample2 = res.sample.get(2)
 sample_name = sample.name
@@ -55,14 +55,14 @@ sample_name = sample.name
 data3 = res.data.get(3)
 creation_time = data.created
 
-bowtie_process = res.data.get("alignment-bowtie-2-2-3_trim")
+bowtie_process = res.data.get("alignment-bowtie2")
 public_permissions = bowtie_process.permissions["public"]
 
 ###################
 
 upload_processes = res.process.filter(category='upload')
 
-reads = res.run(slug='import-upload-reads-fastq',
+reads = res.run(slug='upload-fastq-single',
                 input={'src': '/path/to/file/reads.fastq'})
 
 assembled_reads = res.run(slug='assembler-abyss',

@@ -120,7 +120,7 @@ Run Bowtie2 mapping on the reads ``Data`` object of the above sample:
    genome = res.data.get('hg19')
    genome_id = genome.id
    reads_id = sample.data[0]
-   aligned = res.run('alignment-bowtie-2-2-3_trim', input={
+   aligned = res.run('alignment-bowtie2', input={
                          'genome': genome_id,
                          'reads': reads_id,
                          'reporting': {'rep_mode': 'k', 'k_reports': 1}
