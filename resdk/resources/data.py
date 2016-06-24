@@ -148,14 +148,16 @@ class Data(BaseResource):
 
         """
         download_list = []
-        for file_field_name, ann in self.annotation.items():
-            if (file_field_name.startswith('output') and
-                    ann['type'].startswith('basic:file:') and
-                    ann['value'] is not None and
-                    (file_name is None or file_name == ann['value']['file']) and
-                    (field_name is None or field_name == file_field_name)):
-
-                download_list.append(ann['value']['file'])
+        for ann_field_name, ann in self.annotation.items():
+            if ann_field_name.startswith('output') and (field_name is None or field_name == ann_field_name):
+                if ann['type'].startswith('basic:file:'):
+                    if ann['value']['file'] is not None and (file_name is None or file_name == ann['value']['file']):
+                        download_list.append(ann['value']['file'])
+                elif ann['type'].startswith('list:basic:file:'):
+                    if ann['value'] is not None:
+                        for element in ann['value']:
+                            if file_name is None or file_name == element['file']:
+                                download_list.append(element['file'])
 
         return download_list
 

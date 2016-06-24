@@ -42,6 +42,7 @@ class TestData(unittest.TestCase):
     @patch('resdk.resources.data.Data', spec=True)
     def test_files(self, data_mock):
         data_annotation = {
+            'output.list': {'value': [{'file': "element.gz"}], 'type': 'list:basic:file:'},
             'output.fastq': {'value': {'file': "file.fastq.gz"}, 'type': 'basic:file:fastq'},
             'output.fastq_archive': {'value': {'file': "archive.gz"}, 'type': 'basic:file:'},
             'input.fastq_url': {'value': {'file': "blah"}, 'type': 'basic:url:'},
@@ -50,9 +51,9 @@ class TestData(unittest.TestCase):
         data_mock.configure_mock(annotation=data_annotation)
 
         file_list = Data.files(data_mock)
-        self.assertEqual(set(file_list), set(['archive.gz', 'file.fastq.gz']))
-        file_list = Data.files(data_mock, file_name='archive.gz')
-        self.assertEqual(file_list, ['archive.gz'])
+        self.assertEqual(set(file_list), set(['element.gz', 'archive.gz', 'file.fastq.gz']))
+        file_list = Data.files(data_mock, file_name='element.gz')
+        self.assertEqual(file_list, ['element.gz'])
         file_list = Data.files(data_mock, field_name='output.fastq')
         self.assertEqual(file_list, ['file.fastq.gz'])
 
