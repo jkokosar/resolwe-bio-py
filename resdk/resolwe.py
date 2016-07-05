@@ -13,7 +13,6 @@ Resolwe
 from __future__ import absolute_import, division, print_function
 
 import os
-import re
 import uuid
 import ntpath
 import logging
@@ -61,6 +60,7 @@ class Resolwe(object):
         self.data = ResolweQuerry(self, Data)
         self.collection = ResolweQuerry(self, Collection)
         self.sample = ResolweQuerry(self, Sample)
+        self.presample = ResolweQuerry(self, Sample, endpoint='presample')
         self.process = ResolweQuerry(self, Process)
 
         self.logger = logging.getLogger(__name__)
@@ -154,8 +154,8 @@ class Resolwe(object):
                 server_process = server_process[0]
                 # Version for newly reistered process has to be increased. If
                 # this has not been already done in yaml file it is raised now.
-                if not process['version'] > server_process['version']:
-                    process['version'] = server_process['version'] + 1
+                if not process['version'] > server_process.version:
+                    process['version'] = server_process.version + 1
                     self.logger.warning(
                         "Process '%s' version increased automatically: %s",
                         slug,
@@ -510,11 +510,11 @@ class ResolweQuerry(object):
 
     """
 
-    def __init__(self, resolwe, Resource):
+    def __init__(self, resolwe, Resource, endpoint=None):
         self.resolwe = resolwe
         self.resource = Resource
-        self.endpoint = Resource.endpoint
-        self.api = getattr(resolwe.api, Resource.endpoint)
+        self.endpoint = endpoint if endpoint else Resource.endpoint
+        self.api = getattr(resolwe.api, self.endpoint)
         self.logger = logging.getLogger(__name__)
 
     def get(self, uid):
@@ -526,10 +526,10 @@ class ResolweQuerry(object):
         :rtype: object of type self.resource
 
         """
-        if re.match('^[0-9]+$', str(uid)):  # iud is ID number:
-            return self.resource(id=uid, resolwe=self.resolwe)
-        else:  # uid is slug
-            return self.resource(slug=uid, resolwe=self.resolwe)
+        resource_inputs = {'id': uid} if str(uid).isdigit() else {'slug': uid}
+        if self.endpoint == 'presample':
+            resource_inputs['presample'] = True
+        return self.resource(resolwe=self.resolwe, **resource_inputs)
 
     def filter(self, **kwargs):
         """Return a list of Data objects that match kwargs.
@@ -572,7 +572,10 @@ class ResolweQuerry(object):
         Note: The filtering options might change (improve) with time.
 
         """
-        return [self.resource(model_data=x, resolwe=self.resolwe) for x in self.api.get(**kwargs)]
+        resource_inputs = {'resolwe': self.resolwe}
+        if self.endpoint == 'presample':
+            resource_inputs['presample'] = True
+        return [self.resource(model_data=x, **resource_inputs) for x in self.api.get(**kwargs)]
 
     def search(self):
         """Full text search."""

@@ -18,7 +18,7 @@ DATA1 = MagicMock(
 
 DATA2 = MagicMock(
     process_type='data:expression:blah',
-    **{'files.return_value': ['output.exp']})
+    **{'files.return_value': ['outfile.exp']})
 
 
 class TestBaseCollection(unittest.TestCase):
@@ -43,7 +43,7 @@ class TestBaseCollection(unittest.TestCase):
         data_mock.side_effect = [DATA1, DATA2]
 
         flist = BaseCollection.files(collection_mock)
-        self.assertEqual(set(flist), set(['arch.gz', 'reads.fq', 'output.exp']))
+        self.assertEqual(set(flist), set(['arch.gz', 'reads.fq', 'outfile.exp']))
 
     @patch('resdk.resources.collection.BaseCollection', spec=True)
     def test_print_annotation(self, collection_mock):
@@ -67,10 +67,15 @@ class TestBaseCollectionDownload(unittest.TestCase):
     @patch('resdk.resources.collection.BaseCollection', spec=True)
     def test_data_type_tuple(self, collection_mock, data_mock):
         collection_mock.configure_mock(data=[1, 2], resolwe=MagicMock())
-        data_mock.side_effect = [DATA1, DATA2]
+        data_mock.side_effect = [DATA1, DATA2, DATA1, DATA2]
 
         BaseCollection.download(collection_mock, data_type=('data:expression:', 'output.exp'))
-        flist = [u'2/output.exp']
+        flist = [u'2/outfile.exp']
+        collection_mock.resolwe.download_files.assert_called_once_with(flist, None)
+
+        # Check if ok to also provide ``output_field`` that does not start with 'output'
+        collection_mock.reset_mock()
+        BaseCollection.download(collection_mock, data_type=('data:expression:', 'exp'))
         collection_mock.resolwe.download_files.assert_called_once_with(flist, None)
 
     @patch('resdk.resources.collection.Data')
@@ -105,6 +110,23 @@ class TestSample(unittest.TestCase):
     def test_sample_print_annotation(self, sample_mock):
         with self.assertRaises(NotImplementedError):
             Sample.print_annotation(sample_mock)
+
+    @patch('resdk.resources.sample.Sample', spec=True)
+    def test_update_descriptor(self, sample_mock):
+        sample_mock.configure_mock(id=42, api=MagicMock())
+        Sample.update_descriptor(sample_mock, {'field': 'value'})
+        sample_mock.api(42).patch.assert_called_once_with({u'descriptor': {'field': 'value'}})
+
+    @patch('resdk.resources.sample.Sample', spec=True)
+    def test_confirm_is_annotated(self, sample_mock):
+        sample_mock.configure_mock(endpoint='anything but presample')
+        with self.assertRaises(NotImplementedError):
+            Sample.confirm_is_annotated(sample_mock)
+
+        sample_mock.configure_mock(endpoint='presample', id=42, api=MagicMock(), logger=MagicMock())
+        Sample.confirm_is_annotated(sample_mock)
+        sample_mock.api(42).patch.assert_called_once_with({'presample': False})
+
 
 if __name__ == '__main__':
     unittest.main()
