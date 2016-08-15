@@ -193,6 +193,8 @@ class Resolwe(object):
 
         self.logger.info("SCP: %s", TOOLS_REMOTE_HOST)
         for tool in tools:
+            if not os.path.isfile(tool):
+                raise ValueError("Tools file not found: '{}'.".format(tool))
             # Define subprocess, but not yet run it. Also:
             # (1) redirect stderr to stdout
             # (2) enable to retrieve stdout of the subprocess in here
@@ -205,7 +207,7 @@ class Resolwe(object):
             stdout, _ = sub_process.communicate()
             self.logger.info(stdout)
             if sub_process.returncode == 1:
-                raise ValueError("Tools file not found: '{}'.".format(tool))
+                raise ValueError("Something wrong while SCP for tool: '{}'.".format(tool))
             if sub_process.returncode > 1:
                 self.logger.warning("STATUS: %s", sub_process.returncode)
 
@@ -253,25 +255,17 @@ class Resolwe(object):
         in the tools argument. This scripts will be copied to the
         server automatically with SCP.
 
-        :param slug: Process slug (unique identifier)
-        :type slug: str
-        :param input: Input values
-        :type input: dict
-        :param descriptor: Descriptor values
-        :type descriptor: dict
-        :param descriptor_schema: Descriptor fields
-        :type descriptor_schema: list of dicts
-        :param collections: Default collections of Data object
-        :type collections: list of ints
-        :param data_name: Default name of Data object
-        :type data_name: string
-        :param src: Register process from source YAML file
-        :type src: str
-        :param tools: Process auxiliary scripts to upload
-        :type tools: list of str
+        :param str slug: Process slug (human readable unique identifier)
+        :param dict input: Input values
+        :param dict descriptor: Descriptor values
+        :param str descriptor_schema: A valid descriptor schema slug
+        :param list collections: Id's of collections into which data object should be included
+        :param str data_name: Default name of data object
+        :param str src: Path to YAML file with custom process definition
+        :param list tools: Paths to auxiliary scripts to upload
 
+        :return: data object that was just created
         :rtype: Data object
-
         """
         if ((descriptor and not descriptor_schema) or
                 (not descriptor and descriptor_schema)):
@@ -407,7 +401,7 @@ class Resolwe(object):
 
         return response.json()['files'][0]['temp']
 
-    def download_files(self, files, download_dir=None):  # pylint: disable=redefined-builtin
+    def _download_files(self, files, download_dir=None):  # pylint: disable=redefined-builtin
         """Download files.
 
         Download files from the Resolwe server to the download

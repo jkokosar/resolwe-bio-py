@@ -4,10 +4,18 @@ Change Log
 
 All notable changes to this project are documented in this file.
 
+==================
+1.3.5 - 2016-08-04
+==================
 
-==========
-Unreleased
-==========
+Changed
+-------
+* Improved documentation organization and text
+
+
+==================
+1.3.4 - 2016-08-01
+==================
 
 Added
 -----
